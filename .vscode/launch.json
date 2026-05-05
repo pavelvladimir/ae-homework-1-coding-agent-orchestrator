@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "PatchPilot Demo",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "patchpilot",
+      "args": [
+        "demo"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "PatchPilot Demo (Risk Branch)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "patchpilot",
+      "args": [
+        "demo",
+        "--task",
+        "Plan a safe database migration from SQLite to Postgres for the support service"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Sample Service Dev",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "pnpm --dir examples/sample_service dev"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "codex": {
+    "command": ["codex", "exec", "--input-file", "{prompt_file}"],
+    "timeout_seconds": 240
+  },
+  "claude": {
+    "command": ["claude", "--print", "--prompt-file", "{prompt_file}"],
+    "timeout_seconds": 240
+  }
+}

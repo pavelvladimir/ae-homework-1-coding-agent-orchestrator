@@ -1,0 +1,53 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "PatchPilot: Demo",
+      "type": "shell",
+      "command": "python3 -m patchpilot demo",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "PatchPilot: Python tests",
+      "type": "shell",
+      "command": "python3 -m unittest discover -s tests",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Sample Service: install",
+      "type": "shell",
+      "command": "pnpm --dir examples/sample_service install",
+      "problemMatcher": []
+    },
+    {
+      "label": "Sample Service: lint",
+      "type": "shell",
+      "command": "pnpm --dir examples/sample_service lint",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Sample Service: build",
+      "type": "shell",
+      "command": "pnpm --dir examples/sample_service build",
+      "group": "build",
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "Sample Service: test",
+      "type": "shell",
+      "command": "pnpm --dir examples/sample_service test",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Sample Service: dev",
+      "type": "shell",
+      "command": "pnpm --dir examples/sample_service dev",
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}
