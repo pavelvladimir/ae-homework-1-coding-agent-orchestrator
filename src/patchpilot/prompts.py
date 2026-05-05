@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
 from patchpilot.models import AgentRequest
 
 
@@ -39,6 +41,39 @@ Rules:
 """
 
 
+AGENT_RESPONSE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "summary": {"type": "string"},
+        "details": {"type": "string"},
+        "file_suggestions": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "quality_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10,
+        },
+        "risk_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10,
+        },
+        "needs_follow_up": {"type": "boolean"},
+    },
+    "required": [
+        "summary",
+        "details",
+        "file_suggestions",
+        "quality_score",
+        "risk_score",
+        "needs_follow_up",
+    ],
+}
+
+
 def build_agent_prompt(request: AgentRequest) -> str:
     prior_messages = "\n".join(f"- {item}" for item in request.prior_messages) or "- None"
     constraints = "\n".join(f"- {item}" for item in request.constraints) or "- None"
@@ -58,3 +93,7 @@ def build_agent_prompt(request: AgentRequest) -> str:
         f"{request.context}\n\n"
         f"{JSON_CONTRACT}"
     )
+
+
+def build_agent_response_schema() -> dict[str, object]:
+    return deepcopy(AGENT_RESPONSE_SCHEMA)

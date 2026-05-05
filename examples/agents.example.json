@@ -1,10 +1,10 @@
 {
   "codex": {
-    "command": ["codex", "exec", "--input-file", "{prompt_file}"],
+    "command": ["codex", "exec", "--ephemeral", "--skip-git-repo-check", "--output-schema", "{schema_file}", "--output-last-message", "{response_file}", "{prompt}"],
     "timeout_seconds": 240
   },
   "claude": {
-    "command": ["claude", "--print", "--prompt-file", "{prompt_file}"],
+    "command": ["claude", "--print", "--no-session-persistence", "--output-format", "json", "--json-schema", "{schema_json}", "{prompt}"],
     "timeout_seconds": 240
   }
 }

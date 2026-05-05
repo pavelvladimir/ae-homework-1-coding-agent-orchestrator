@@ -71,6 +71,44 @@ class AgentOrchestrator:
         writer.write_agent_response("01_codex_parallel_discovery", codex_discovery)
         writer.write_agent_response("02_claude_parallel_review", claude_review)
 
+        backend_issues = self._collect_backend_issues([codex_discovery, claude_review])
+        if backend_issues:
+            writer.write_text(
+                "03_backend_diagnostics.md",
+                self._build_backend_diagnostics([codex_discovery, claude_review]),
+            )
+            final_summary = self._build_blocked_summary(
+                task=task,
+                repo_path=repo_path,
+                backend_issues=backend_issues,
+            )
+            writer.write_text("99_final_summary.md", final_summary)
+            writer.write_json("manifest.json", {"files": writer.manifest})
+            return WorkflowResult(
+                task=task,
+                repo_path=repo_path,
+                output_dir=writer.output_dir,
+                approved=False,
+                iterations=0,
+                branch="blocked",
+                final_summary=final_summary,
+                manifest=list(writer.manifest),
+                next_step="Resolve the agent backend issues and rerun the orchestration.",
+                implementation_summary=(
+                    "Run blocked before implementation planning because one or more agent "
+                    "backends were unavailable."
+                ),
+                implementation_files=[],
+                final_review_summary="Agent backend preflight failed.",
+                key_artifacts={
+                    "codex_parallel_discovery": "01_codex_parallel_discovery.md",
+                    "claude_parallel_review": "02_claude_parallel_review.md",
+                    "backend_diagnostics": "03_backend_diagnostics.md",
+                    "final_summary": "99_final_summary.md",
+                },
+                backend_issues=backend_issues,
+            )
+
         supervisor_plan = self._build_supervisor_plan(task, codex_discovery, claude_review)
         writer.write_text("03_supervisor_plan.md", supervisor_plan.as_markdown())
         writer.write_json("03_supervisor_plan.json", supervisor_plan.to_dict())
@@ -176,12 +214,24 @@ class AgentOrchestrator:
         writer.write_json("manifest.json", {"files": writer.manifest})
 
         return WorkflowResult(
+            task=task,
+            repo_path=repo_path,
             output_dir=writer.output_dir,
             approved=approved,
             iterations=review_rounds,
             branch=supervisor_plan.branch,
             final_summary=final_summary,
             manifest=list(writer.manifest),
+            next_step=supervisor_plan.next_step,
+            implementation_summary=implementation.summary,
+            implementation_files=list(implementation.file_suggestions),
+            final_review_summary=final_review.summary if final_review else "No review output.",
+            key_artifacts={
+                "supervisor_plan": "03_supervisor_plan.md",
+                "implementation_brief": f"{implementation_stem}.md",
+                "final_summary": "99_final_summary.md",
+            },
+            backend_issues=[],
         )
 
     def _build_supervisor_plan(self, task: str, codex_discovery, claude_review) -> SupervisorPlan:
@@ -250,4 +300,65 @@ class AgentOrchestrator:
             "- A supervisor-selected branch\n"
             "- An implementation brief\n"
             "- At least one review decision\n"
+        )
+
+    def _collect_backend_issues(self, responses: list) -> list[str]:
+        issues: list[str] = []
+        for response in responses:
+            if not response.backend_issue:
+                continue
+
+            issue = f"{response.agent_name}: {response.backend_issue}"
+            if response.next_step_hint:
+                issue = f"{issue} {response.next_step_hint}"
+            issues.append(issue)
+        return issues
+
+    def _build_backend_diagnostics(self, responses: list) -> str:
+        sections = [
+            "# Backend diagnostics",
+            "",
+            "PatchPilot stopped before supervisor planning because at least one real agent backend was unavailable.",
+            "",
+        ]
+        for response in responses:
+            if not response.backend_issue:
+                continue
+
+            sections.extend(
+                [
+                    f"## {response.agent_name}",
+                    response.backend_issue,
+                    "",
+                    "Suggested fix:",
+                    response.next_step_hint
+                    or "Inspect the raw output and update the local CLI setup.",
+                    "",
+                    "Captured details:",
+                    response.details,
+                    "",
+                ]
+            )
+
+        return "\n".join(sections).rstrip() + "\n"
+
+    def _build_blocked_summary(
+        self,
+        *,
+        task: str,
+        repo_path: Path,
+        backend_issues: list[str],
+    ) -> str:
+        issue_lines = "\n".join(f"- {item}" for item in backend_issues)
+        return (
+            "# Final summary\n\n"
+            f"- Task: {task}\n"
+            f"- Repository: `{repo_path}`\n"
+            "- Branch: `blocked`\n"
+            "- Approved: no\n"
+            "- Review rounds: 0\n\n"
+            "## Why this run stopped\n"
+            f"{issue_lines}\n\n"
+            "## Next step\n"
+            "Resolve the backend issues above and rerun PatchPilot.\n"
         )

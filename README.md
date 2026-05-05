@@ -96,6 +96,7 @@ uv run patchpilot demo
 ```
 
 This uses deterministic mock agents and the bundled `examples/sample_service` repository, so it works even without API keys or installed agent CLIs.
+The current PatchPilot flow is read-only: it generates an orchestration packet and review artifacts, but it does not edit the target repository automatically.
 
 ### Bundled example repository
 
@@ -141,7 +142,7 @@ uv run patchpilot demo --task "Plan a safe database migration from SQLite to Pos
 ```bash
 uv run patchpilot run \
   --task "Add structured logging to API handlers" \
-  --repo /path/to/repository \
+  --repo . \
   --mock
 ```
 
@@ -156,24 +157,31 @@ Example file: `examples/agents.example.json`
 ```json
 {
   "codex": {
-    "command": ["codex", "exec", "--input-file", "{prompt_file}"],
+    "command": ["codex", "exec", "--ephemeral", "--skip-git-repo-check", "--output-schema", "{schema_file}", "--output-last-message", "{response_file}", "{prompt}"],
     "timeout_seconds": 240
   },
   "claude": {
-    "command": ["claude", "--print", "--prompt-file", "{prompt_file}"],
+    "command": ["claude", "--print", "--no-session-persistence", "--output-format", "json", "--json-schema", "{schema_json}", "{prompt}"],
     "timeout_seconds": 240
   }
 }
 ```
 
-The exact command flags may differ on your machine. PatchPilot keeps that layer configurable on purpose.
+The exact command flags may differ on your machine. PatchPilot keeps that layer configurable on purpose, but the bundled example matches the current Codex and Claude CLI syntax on this machine.
+
+Useful preflight checks before running the real backends:
+
+- `codex exec --help` should work, and the command template should keep `--ephemeral` for non-interactive runs
+- `claude auth status` should report `loggedIn: true`
+- if you launch PatchPilot from inside the Codex desktop app, use the mock `demo` there and run real CLI backends from your normal Terminal app, where they have their own network and session access
+- if `patchpilot run` detects a backend problem, it now stops with explicit diagnostics instead of pretending the run succeeded
 
 Run with real backends:
 
 ```bash
 uv run patchpilot run \
   --task "Migrate the project from SQLite to Postgres" \
-  --repo /path/to/repository \
+  --repo . \
   --config examples/agents.example.json
 ```
 

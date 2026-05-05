@@ -42,6 +42,8 @@ class AgentResponse:
     quality_score: int
     risk_score: int
     needs_follow_up: bool
+    backend_issue: str | None = None
+    next_step_hint: str | None = None
     raw_output: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -55,9 +57,21 @@ class AgentResponse:
         meta_lines = "\n".join(
             f"- `{key}`: {value}" for key, value in sorted(self.metadata.items())
         ) or "- None"
+        backend_issue = (
+            f"## Backend issue\n{self.backend_issue}\n\n"
+            if self.backend_issue
+            else ""
+        )
+        next_step_hint = (
+            f"## Suggested fix\n{self.next_step_hint}\n\n"
+            if self.next_step_hint
+            else ""
+        )
         return (
             f"# {self.agent_name} / {self.stage}\n\n"
             f"## Summary\n{self.summary}\n\n"
+            f"{backend_issue}"
+            f"{next_step_hint}"
             f"## Details\n{self.details}\n\n"
             f"## Suggested files\n{file_lines}\n\n"
             f"## Scores\n"
@@ -96,9 +110,17 @@ class SupervisorPlan:
 
 @dataclass(slots=True)
 class WorkflowResult:
+    task: str
+    repo_path: Path
     output_dir: Path
     approved: bool
     iterations: int
     branch: str
     final_summary: str
     manifest: list[str]
+    next_step: str
+    implementation_summary: str
+    implementation_files: list[str]
+    final_review_summary: str
+    key_artifacts: dict[str, str]
+    backend_issues: list[str] = field(default_factory=list)
