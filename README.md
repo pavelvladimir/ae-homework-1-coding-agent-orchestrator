@@ -73,15 +73,26 @@ tests/
 
 Root workspace helpers are included as well:
 
+- `.python-version` pins Python 3.13 for the root `uv` workflow
 - `.nvmrc` pins Node.js 22 for the TypeScript sample app
 - `.vscode/` contains ready-to-use tasks, launch configs, and editor settings
 
 ## Quick start
 
+### Root Python workflow
+
+The orchestrator is intended to be run with `uv`:
+
+```bash
+uv run patchpilot demo
+```
+
+This repository includes a local `uv.toml`, so `uv` keeps its cache inside the project instead of relying on a global cache path.
+
 ### 1. Run the built-in demo
 
 ```bash
-python3 -m patchpilot demo
+uv run patchpilot demo
 ```
 
 This uses deterministic mock agents and the bundled `examples/sample_service` repository, so it works even without API keys or installed agent CLIs.
@@ -120,15 +131,15 @@ pnpm --dir examples/sample_service dev
 Try these:
 
 ```bash
-python3 -m patchpilot demo
-python3 -m patchpilot demo --task "Prepare an implementation packet for adding idempotency to retrying Fastify webhook handlers"
-python3 -m patchpilot demo --task "Plan a safe database migration from SQLite to Postgres for the support service"
+uv run patchpilot demo
+uv run patchpilot demo --task "Prepare an implementation packet for adding idempotency to retrying Fastify webhook handlers"
+uv run patchpilot demo --task "Plan a safe database migration from SQLite to Postgres for the support service"
 ```
 
 ### 2. Run on your own repository
 
 ```bash
-python3 -m patchpilot run \
+uv run patchpilot run \
   --task "Add structured logging to API handlers" \
   --repo /path/to/repository \
   --mock
@@ -160,7 +171,7 @@ The exact command flags may differ on your machine. PatchPilot keeps that layer 
 Run with real backends:
 
 ```bash
-python3 -m patchpilot run \
+uv run patchpilot run \
   --task "Migrate the project from SQLite to Postgres" \
   --repo /path/to/repository \
   --config examples/agents.example.json
@@ -187,7 +198,7 @@ That makes the orchestration visible and easy to demo during a presentation.
 Run tests:
 
 ```bash
-python3 -m unittest discover -s tests
+uv run python -m unittest discover -s tests
 ```
 
 ## Elevator pitch
